@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardiovascular CFD Simulation Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: table;
+            width: 100%;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+
+        .sidebar {
+            display: table-cell;
+            width: 260px;
+            background-color: #1e293b;
+            color: #fff;
+            padding: 30px 20px;
+            vertical-align: top;
+            height: 100vh;
+            position: fixed;
+        }
+
+        .sidebar h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #38bdf8;
+            border-bottom: 2px solid #334155;
+            padding-bottom: 10px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar ul li {
+            margin-bottom: 12px;
+        }
+
+        .sidebar ul li a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+            display: block;
+            padding: 10px 15px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar ul li a:hover, .sidebar ul li a.active {
+            background-color: #334155;
+            color: #fff;
+            border-left: 4px solid #38bdf8;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 40px;
+            min-height: 100vh;
+            background-color: #f8fafc;
+        }
+
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            color: #1e293b;
+            margin: 40px 0 20px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #38bdf8;
+            display: inline-block;
+        }
+
+        .subsection-title {
+            font-size: 16px;
+            color: #475569;
+            margin: 20px 0 15px 0;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .grid-row {
+            margin-left: -10px;
+            margin-right: -10px;
+            margin-bottom: 20px;
+        }
+        
+        .grid-row::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+
+        .col-2 {
+            float: left;
+            width: 50%;
+            padding: 10px;
+        }
+
+        .col-3 {
+            float: left;
+            width: 33.333%;
+            padding: 10px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .media-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .media-card .media-title {
+            background: #f1f5f9;
+            padding: 12px 15px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .media-card video {
+            width: 100%;
+            display: block;
+            height: auto;
+            background-color: #000;
+        }
+
+        /* Fixed Image constraints for the Steady State Profiles */
+        .media-card img {
+            width: 100%;
+            height: 220px;
+            display: block;
+            object-fit: cover;
+            background-color: #000;
+        }
+
+        .pdf-container {
+            width: 100%;
+            height: 650px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 10px;
+            background-color: #525659;
+        }
+
+        .pdf-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .project-section {
+            margin-bottom: 60px;
+            scroll-margin-top: 40px;
+        }
+
+        .text-muted {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 4px;
+            background-color: #e2e8f0;
+            color: #475569;
+            margin-top: 5px;
+        }
+
+        .badge-pulsatile { background-color: #dbeafe; color: #1e40af; }
+        .badge-stent { background-color: #fef3c7; color: #92400e; }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>CFD Dashboard</h2>
+        <ul>
+            <li><a href="#overview">Project Overview</a></li>
+            <li><a href="#constant-velocity">Constant Velocity Study</a></li>
+            <li><a href="#pulsatile-newtonian">Pulsatile: Newtonian</a></li>
+            <li><a href="#pulsatile-non-newtonian">Pulsatile: Non-Newtonian</a></li>
+            <li><a href="#stent-analysis">Stent Insertion Analysis</a></li>
+            <li><a href="#reports">Reports & Documentation</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+
+        <div class="header" id="overview">
+            <h1>Carotid Artery Computational Fluid Dynamics</h1>
+            <p>Interactive Final Presentation Workspace — Results Review & Simulation Media Archive</p>
+        </div>
+
+        <div class="card">
+            <h3>Project Summary & Discussion Guide</h3>
+            <p style="margin-top: 10px; line-height: 1.6; color: #475569;">
+                This workspace organizes the computational fluid dynamics (CFD) studies conducted on the carotid artery geometry. 
+                Use the sidebar navigation to toggle between steady-state profiles, custom user-defined function (UDF) transient pulsatile runs across varying fluid rheologies, and downstream stent geometric interventions. All raw reports and compiled data sheets are directly accessible at the bottom section.
+            </p>
+        </div>
+
+        <div id="constant-velocity" class="project-section">
+            <div class="section-title">Constant Velocity Section</div>
+            <p class="text-muted" style="margin-bottom: 20px;">Steady-state verification steps structured by rheological classifications.</p>
+
+            <div class="subsection-title">Newtonian Model Results</div>
+            <div class="grid-row">
+                <div class="col-3">
+                    <div class="media-card">
+                        <div class="media-title">Newtonian - Image 1</div>
+                        <img src="constant_velocity/newtonian_img1.png" alt="Replace with newtonian_img1.png">
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="media-card">
+                        <div class="media-title">Newtonian - Image 2</div>
+                        <img src="constant_velocity/newtonian_img2.png" alt="Replace with newtonian_img2.png">
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="media-card">
+                        <div class="media-title">Newtonian - Image 3</div>
+                        <img src="constant_velocity/newtonian_img3.png" alt="Replace with newtonian_img3.png">
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection-title" style="margin-top: 20px;">Non-Newtonian Model Results</div>
+            <div class="grid-row">
+                <div class="col-3">
+                    <div class="media-card">
+                        <div class="media-title">Non-Newtonian - Image 1</div>
+                        <img src="constant_velocity/non_newtonian_img1.png" alt="Replace with non_newtonian_img1.png">
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="media-card">
+                        <div class="media-title">Non-Newtonian - Image 2</div>
+                        <img src="constant_velocity/non_newtonian_img2.png" alt="Replace with non_newtonian_img2.png">
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="media-card">
+                        <div class="media-title">Non-Newtonian - Image 3</div>
+                        <img src="constant_velocity/non_newtonian_img3.png" alt="Replace with non_newtonian_img3.png">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pulsatile-newtonian" class="project-section">
+            <div class="section-title">Pulsatile Flow: Newtonian Models</div>
+            <p class="text-muted" style="margin-bottom: 20px;">Transient fluid animations mapping standardized Newtonian blood approximations across the pulsatile wave cycle.</p>
+            
+            <div class="grid-row">
+                <div class="col-3">
+                    <div class="media-card">
+                        <div class="media-title">Newtonian Video 1</div>
+                        <video controls loop muted>
+                            <source src="pulsatile/newtonian_video1.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div style="padding:10px;"><span class="badge badge-pulsatile">Transient Velocity Wave</span></div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="media-card">
+                        <div class="media-title">Newtonian Video 2</div>
+                        <video controls loop muted>
+                            <source src="pulsatile/newtonian_video2.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div style="padding:10px;"><span class="badge badge-pulsatile">Dynamic Pressure Fields</span></div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="media-card">
+                        <div class="media-title">Newtonian Video 3</div>
+                        <video controls loop muted>
+                            <source src="pulsatile/newtonian_video3.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div style="padding:10px;"><span class="badge badge-pulsatile">WSS Evolution Loop</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pulsatile-non-newtonian" class="project-section">
+            <div class="section-title">Pulsatile Flow: Non-Newtonian Models</div>
+            <p class="text-muted" style="margin-bottom: 20px;">Advanced mathematical viscosity model comparisons under dynamic boundary profiles.</p>
+
+            <div class="subsection-title">1. Casson Model</div>
+            <div class="grid-row">
+                <div class="col-2">
+                    <div class="media-card">
+                        <div class="media-title">Casson Model - Video 1</div>
+                        <video controls loop muted><source src="pulsatile/casson_video1.mp4" type="video/mp4"></video>
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="media-card">
+                        <div class="media-title">Casson Model - Video 2</div>
+                        <video controls loop muted><source src="pulsatile/casson_video2.mp4" type="video/mp4"></video>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection-title">2. Carreau Model</div>
+            <div class="grid-row">
+                <div class="col-2">
+                    <div class="media-card">
+                        <div class="media-title">Carreau Model - Video 1</div>
+                        <video controls loop muted><source src="pulsatile/carreau_video1.mp4" type="video/mp4"></video>
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="media-card">
+                        <div class="media-title">Carreau Model - Video 2</div>
+                        <video controls loop muted><source src="pulsatile/carreau_video2.mp4" type="video/mp4"></video>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection-title">3. Power Law Model</div>
+            <div class="grid-row">
+                <div class="col-2">
+                    <div class="media-card">
+                        <div class="media-title">Power Law Model - Video 1</div>
+                        <video controls loop muted><source src="pulsatile/power_law_video1.mp4" type="video/mp4"></video>
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="media-card">
+                        <div class="media-title">Power Law Model - Video 2</div>
+                        <video controls loop muted><source src="pulsatile/power_law_video2.mp4" type="video/mp4"></video>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection-title">4. Cross Model</div>
+            <div class="grid-row">
+                <div class="col-2">
+                    <div class="media-card">
+                        <div class="media-title">Cross Model - Video 1</div>
+                        <video controls loop muted><source src="pulsatile/cross_video1.mp4" type="video/mp4"></video>
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="media-card">
+                        <div class="media-title">Cross Model - Video 2</div>
+                        <video controls loop muted><source src="pulsatile/cross_video2.mp4" type="video/mp4"></video>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="stent-analysis" class="project-section">
+            <div class="section-title">Stent Analysis Section</div>
+            <p class="text-muted" style="margin-bottom: 20px;">Evaluating post-intervention flow disturbances, structural wall shear adaptations, and recirculation regions.</p>
+            
+            <div class="grid-row">
+                <div class="col-3">
+                    <div class="media-card">
+                        <div class="media-title">Stent Animation 1</div>
+                        <video controls loop muted><source src="stent/stent_video1.mp4" type="video/mp4"></video>
+                        <div style="padding:10px;"><span class="badge badge-stent">Intra-Stent Recirculation</span></div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="media-card">
+                        <div class="media-title">Stent Animation 2</div>
+                        <video controls loop muted><source src="stent/stent_video2.mp4" type="video/mp4"></video>
+                        <div style="padding:10px;"><span class="badge badge-stent">Shear Stress Discontinuity</span></div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="media-card">
+                        <div class="media-title">Stent Animation 3</div>
+                        <video controls loop muted><source src="stent/stent_video3.mp4" type="video/mp4"></video>
+                        <div style="padding:10px;"><span class="badge badge-stent">Post-Stent Turbulence Flow</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="reports" class="project-section" style="margin-bottom: 100px;">
+            <div class="section-title">Reports & Documentation Preview</div>
+            <p class="text-muted" style="margin-bottom: 20px;">Review your finalized report documents and mesh convergence criteria charts interactively inside the viewer spaces below.</p>
+            
+            <div class="subsection-title">1. Final CFD Technical Report</div>
+            <div class="pdf-container">
+                <iframe src="reports/final_cfd_report.pdf"></iframe>
+            </div>
+
+            <div class="subsection-title" style="margin-top: 40px;">2. Mesh Verification & Grid Convergence Log</div>
+            <div class="pdf-container">
+                <iframe src="reports/mesh_validation.pdf"></iframe>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
